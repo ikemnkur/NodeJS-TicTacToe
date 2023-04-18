@@ -3,8 +3,13 @@ const context = canvas.getContext('2d');
 const startBtn = document.getElementById('startBtn');
 const uInput = document.getElementById('usernameInput');
 var username = "";
+var playerNum = "";
 let boardSize = 5;
+let winningPlayer = "";
+let gameover = false;
 let size = canvas.width / boardSize;
+var soundIsplaying = false;
+let gameMsg = document.getElementById('gameMsg');
 
 class Game {
     constructor() {
@@ -12,8 +17,15 @@ class Game {
         this.p1 = "true";
         this.p2 = "";
         this.turn = "p1";
-        // this.board = [boardSize][boardSize];
+
         this.board = [
+            ['', '', '', '', ''],
+            ['', '', '', '', ''],
+            ['', '', '', '', ''],
+            ['', '', '', '', ''],
+            ['', '', '', '', ''],
+        ];
+        this.moves = [
             ['', '', '', '', ''],
             ['', '', '', '', ''],
             ['', '', '', '', ''],
@@ -25,22 +37,21 @@ class Game {
 
 let thisGame = new Game();
 
+function playsound(sound) {
+    if (soundIsplaying == false) {
+        soundIsplaying = true;
+        var audio = new Audio(sound);
+        audio.play();
+        setTimeout(soundIsplaying = false, audio.duration + 500)
+        // console.log("sound is playing");
+    } else {
+        // console.log("sound is already playing");
+    }
+}
+
 const socket = io();
 
 let playerTurn = true;
-// let board=[3][3];
-// let board = [
-//     ['', '', ''],
-//     ['', '', ''],
-//     ['', '', '']
-// ];
-this.board = [
-    ['', '', '', '', ''],
-    ['', '', '', '', ''],
-    ['', '', '', '', ''],
-    ['', '', '', '', ''],
-    ['', '', '', '', ''],
-];
 
 startBtn.addEventListener('click', function (e) {
     const searchMsg = document.getElementById('searchMsg');
@@ -59,57 +70,63 @@ startBtn.addEventListener('click', function (e) {
 canvas.addEventListener('click', function (event) {
     const x = event.offsetX;
     const y = event.offsetY;
+
     // NxN cell division
     const row = Math.floor(y / size);
     const col = Math.floor(x / size);
 
-    if (thisGame.turn == "p1" & username == thisGame.p1) {
-        if (board[row][col] === '') {
-            let turn = "p2";
-            thisGame.board[row][col] = 'X';
-            board[row][col] = 'X';
-            drawBoard();
-            console.log("Move made: ", board);
-            socket.emit('playerMove', row, col, turn, thisGame);
+    if (thisGame == null) {
+        playsound("click.mp3");
+        return false;
+    }
+    if (playerTurn && !gameover) {
+        if (thisGame.turn == "p1" & username == thisGame.p1) {
+            if (thisGame.board[row][col] === '') {
+                let turn = "p2";
+                thisGame.board[row][col] = 'X';
+                drawBoard();
+                socket.emit('playerMove', row, col, turn, playerNum, thisGame);
+                playsound("select.wav");
+                gameMsg.innerText = "It's " + thisGame.p2 + "'s turn to make a move."
+            } else {
+                playsound("select_denied.mp3");
+            }
+            playerTurn = false;
+        }
+
+        if (thisGame.turn == "p2" & username == thisGame.p2) {
+            if (thisGame.board[row][col] === '') {
+                let turn = "p1";
+                thisGame.board[row][col] = "O";
+                drawBoard();
+                socket.emit('playerMove', row, col, turn, playerNum, thisGame);
+                playsound("select.wav");
+
+            } else {
+                playsound("select_denied.wav");
+            }
+            playerTurn = false;
         }
     }
 
-    if (thisGame.turn == "p2" & username == thisGame.p2) {
-        if (board[row][col] === '') {
-            let turn = "p1";
-            thisGame.board[row][col] = "O";
-            board[row][col] = 'O';
-            drawBoard();
-            console.log("Move made: ", board);
-            socket.emit('playerMove', row, col, turn, thisGame);
-        }
-    }
-
-    // if (playerTurn) {
-    //     const x = event.offsetX;
-    //     const y = event.offsetY;
-    //     const row = Math.floor(y / 100);
-    //     const col = Math.floor(x / 100);
-
-    //     if (board[row][col] === '') {
-    //         board[row][col] = 'X';
-    //         drawBoard();
-    //         // socket.emit('playerMove',);
-    //         socket.emit('player-move', { row, col });
-    //         playerTurn = false;
-    //         console.log("Move made: ", board);
-    //     }
-    // }
 });
+
+socket.on("serverConnected", function (numberGames) {
+    console.log("Server connected. ");
+    console.log("Socket.IO ID:", socket.id)
+    var gameId = document.getElementById('gameID');
+    gameId.innerText = numberGames;
+})
 
 socket.on('p1-joined', function (game) {
     var p1text = document.getElementById('p1Txt');
-    var p2text = document.getElementById('p2Txt');
     console.log("p1-joined event: ", game);
     if (game.p1 == username) {
+        playerNum = 1;
         thisGame = game;
         p1text.innerText = username;
     }
+    playerTurn = true;
 });
 
 socket.on('p2-joined', function (game, self) {
@@ -122,38 +139,57 @@ socket.on('p2-joined', function (game, self) {
     gameId.innerText = game.id;
     if (game.p2 == username) {
         thisGame = game;
+        playerNum = 2;
         p2text.innerText = username;
         p1text.innerText = game.p1;
+        // gameMsg.innerText = "It's " + game.p1 + "'s turn to make a move."
     } else if (game.p1 == username) {
         thisGame = game;
         p2text.innerText = game.p2;
         p1text.innerText = game.p1;
+        // gameMsg.innerText = "It's Your turn to make a move."
     }
     searchMsg.hidden = true;
     foundMsg.hidden = false;
+    setTimeout(() => {
+        foundMsg.hidden = true;
+        gameMsg.hidden = false;
+    }, 3000)
 });
 
-
-socket.on('opponentMove', function (move, game) {
-    thisGame = game;
-    if (thisGame.p1 == username) {
-        board[move.row][move.col] = 'X';
-        thisGame.board[move.row][move.col] = 'X';
-    } else if (thisGame.p2 == username) {
-        board[move.row][move.col] = 'O';
-        thisGame.board[move.row][move.col] = 'O';
+socket.on('winner', function (winner) {
+    if (winner == "draw") {
+        gameMsg.innerText = "Game Over: There is a Draw!"
+        playsound("DrawGame.wav")
+    } else {
+        console.log("winner: " + winner);
+        gameover = true;
+        winningPlayer = winner;
+        if (winningPlayer == username) {
+            playsound("LoseGame.wav")
+            gameMsg.innerText = "Game Over: You lose, " + winner + "has won!"
+        } else {
+            gameMsg.innerText = "Game Over: You win, " + winner + "has won!"
+            playsound("WinGame.wav")
+        }
     }
-    console.log("board[" + move.row + "][" + move.col + "]");
+})
+
+socket.on('opponentMove', function (move, playerNumber, game) {
+    thisGame = game;
+    if (playerNumber == 1) {
+        thisGame.board[move.row][move.col] = 'X';
+        gameMsg.innerText = "An 'X' had been placedon the board @: [" + move.row + "][" + move.col + "]";
+        setTimeout(() => { gameMsg.innerText = "It's " + thisGame.p2 + "'s turn to make a move." }, 2500)
+    } else if (playerNumber == 2) {
+        thisGame.board[move.row][move.col] = 'O';
+        gameMsg.innerText = "An 'O' had been placed on the board at: [" + move.row + "][" + move.col + "]";
+        setTimeout(() => { gameMsg.innerText = "It's " + thisGame.p1 + "'s turn to make a move." }, 2500)
+    }
     drawBoard();
-    playerTurn = true;
+    if(playerNumber == playerNum)
+        playerTurn = true;
 });
-
-
-// socket.on('opponent-move', function (data) {
-//     board[data.row][data.col] = 'O';
-//     drawBoard();
-//     playerTurn = true;
-// });
 
 function drawBoard() {
     //Clear the board
@@ -162,20 +198,22 @@ function drawBoard() {
     // Draw X's and O's
     for (let row = 0; row < boardSize; row++) {
         for (let col = 0; col < boardSize; col++) {
-            const value = board[row][col];
+            const value = thisGame.board[row][col];
             const x = col * 100 + 50;
             const y = row * 100 + 50;
 
             //set line thickness for the X's and O's
             context.lineWidth = 3;
-            if (value === 'X') {
+            if (value == 'X') {
                 //color is greenish
                 context.fillStyle = "#33FF33";
                 context.moveTo(x - 30, y - 30);
                 context.lineTo(x + 30, y + 30);
                 context.moveTo(x + 30, y - 30);
                 context.lineTo(x - 30, y + 30);
-            } else if (value === 'O') {
+                context.stroke();
+            }
+            if (value == 'O') {
                 // color is reddish
                 context.fillStyle = "#FF3333";
                 context.beginPath();
@@ -195,24 +233,72 @@ function drawBoard() {
         context.moveTo(100 * i, 0);
         context.lineTo(100 * i, canvas.height);
         // Draw horizontal lines
-        context.moveTo(0, 100*i);
-        context.lineTo(canvas.width, 100*i);
+        context.moveTo(0, 100 * i);
+        context.lineTo(canvas.width, 100 * i);
     }
-
-    // // Draw vertical lines
-    // context.moveTo(100, 0);
-    // context.lineTo(100, canvas.height);
-    // context.moveTo(200, 0);
-    // context.lineTo(200, canvas.height);
-
-    // // Draw horizontal lines
-    // context.moveTo(0, 100);
-    // context.lineTo(canvas.width, 100);
-    // context.moveTo(0, 200);
-    // context.lineTo(canvas.width, 200);
 
     context.stroke();
 }
 
 drawBoard();
 
+function checkWinner(board, size) {
+
+    // Check rows
+    for (let row = 0; row < size; row++) {
+        const firstElement = board[row][0];
+        let win = true;
+        for (let col = 1; col < size; col++) {
+            if (board[row][col] !== firstElement) {
+                win = false;
+                break;
+            }
+        }
+        if (win) {
+            return firstElement;
+        }
+    }
+
+    // Check columns
+    for (let col = 0; col < size; col++) {
+        const firstElement = board[0][col];
+        let win = true;
+        for (let row = 1; row < size; row++) {
+            if (board[row][col] !== firstElement) {
+                win = false;
+                break;
+            }
+        }
+        if (win) {
+            return firstElement;
+        }
+    }
+
+    // Check diagonals
+    const firstDiagonalElement = board[0][0];
+    let firstDiagonalWin = true;
+    for (let i = 1; i < size; i++) {
+        if (board[i][i] !== firstDiagonalElement) {
+            firstDiagonalWin = false;
+            break;
+        }
+    }
+    if (firstDiagonalWin) {
+        return firstDiagonalElement;
+    }
+
+    const secondDiagonalElement = board[0][size - 1];
+    let secondDiagonalWin = true;
+    for (let i = 1; i < size; i++) {
+        if (board[i][size - 1 - i] !== secondDiagonalElement) {
+            secondDiagonalWin = false;
+            break;
+        }
+    }
+    if (secondDiagonalWin) {
+        return secondDiagonalElement;
+    }
+
+    // No winner
+    return null;
+}

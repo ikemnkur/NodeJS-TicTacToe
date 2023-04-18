@@ -4,26 +4,33 @@
 <head>
   <meta charset="UTF-8">
   <title>Tic Tac Toe</title>
-  <style>
-    canvas {
-      border: 1px solid #000;
-    }
-  </style>
+  <link rel="stylesheet" href="/main.css" />
 </head>
 
 <body>
-  <div>
-    <label> Username: </label>
-    <input id="usernameInput" type="text">
-    <button id="startBtn"> Start A Match </button>
-    <div>
-      <p id= "startErrorMsg" hidden style="color: red;">Error: type a username</p>
-      <p id= "searchMsg" hidden style="color: #dab901;">Searching for a Player</p>
-      <p id= "foundMsg" hidden style="color: green;">A player has been found</p>
-      <text> GAME ID: <text id="gameID">#XXXX</text></text>
+  <div id="form" style="padding: 10px; margin: 10px; border: 5px solid; border-radius: 5px; background-color: lavender;">
+    <div style="padding: 5px;">
+      <label> Username: </label>
+      <input id="usernameInput" type="text">
+      <button id="startBtn"> Start A Match </button>
     </div>
-    <div id="pvpInfo">
-      <text id="p1Txt">User1</text> vs. <text id="p2Txt">User2</text>
+    <div style="padding: 5px;">
+      <p id="startErrorMsg" hidden style="color: red;">Error: Type a Username</p>
+      <p id="searchMsg" hidden style="color: #dab901;">Searching for a Player...</p>
+      <p id="foundMsg" hidden style="color: green;">A player has been found! A New Game has Begun.</p> 
+      <p id="gameMsg" hidden style="color: black;">Begin</p>
+    </div>
+    <div>
+      <text style="padding: 5px; ">
+        GAME ID:
+        <text id="gameID">#XXXX</text></text>
+    </div>
+    <div id="pvpInfo" style="padding: 5px;">
+      <text class="P1">P1:</text>
+      <text class="P1" id="p1Txt">User1</text>
+      <text style="color: red; padding: 0px 5px 0px 5px;">-Versus- </text>
+      <text class="P2">P2:</text>
+      <text class="P2" id="p2Txt">User2</text>
     </div>
   </div>
   <div style="padding: 20px;">
