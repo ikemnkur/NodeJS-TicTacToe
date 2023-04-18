@@ -10,6 +10,8 @@ let gameover = false;
 let size = canvas.width / boardSize;
 var soundIsplaying = false;
 let gameMsg = document.getElementById('gameMsg');
+const searchMsg = document.getElementById('searchMsg');
+const errorMsg = document.getElementById('startErrorMsg');
 
 class Game {
     constructor() {
@@ -17,7 +19,8 @@ class Game {
         this.p1 = "true";
         this.p2 = "";
         this.turn = "p1";
-
+        this.moveNum = 0;
+        this.boardSize = 5;
         this.board = [
             ['', '', '', '', ''],
             ['', '', '', '', ''],
@@ -55,11 +58,11 @@ let playerTurn = true;
 
 startBtn.addEventListener('click', function (e) {
     const searchMsg = document.getElementById('searchMsg');
-    const seMsg = document.getElementById('startErrorMsg');
+    const errorMsg = document.getElementById('startErrorMsg');
     if (uInput.value == "") {
-        seMsg.hidden = false;
+        errorMsg.hidden = false;
     } else {
-        seMsg.hidden = true;
+        errorMsg.hidden = true;
         searchMsg.hidden = false;
         socket.emit('joinGame', uInput.value, boardSize);
         username = uInput.value;
@@ -88,25 +91,30 @@ canvas.addEventListener('click', function (event) {
                 socket.emit('playerMove', row, col, turn, playerNum, thisGame);
                 playsound("select.wav");
                 gameMsg.innerText = "It's " + thisGame.p2 + "'s turn to make a move."
-            } else {
-                playsound("select_denied.mp3");
             }
             playerTurn = false;
-        }
+        } else
+            if (thisGame.turn == "p2" & username == thisGame.p2) {
+                if (thisGame.board[row][col] === '') {
+                    let turn = "p1";
+                    thisGame.board[row][col] = "O";
+                    drawBoard();
+                    socket.emit('playerMove', row, col, turn, playerNum, thisGame);
+                    playsound("select.wav");
 
-        if (thisGame.turn == "p2" & username == thisGame.p2) {
-            if (thisGame.board[row][col] === '') {
-                let turn = "p1";
-                thisGame.board[row][col] = "O";
-                drawBoard();
-                socket.emit('playerMove', row, col, turn, playerNum, thisGame);
-                playsound("select.wav");
-
+                }
+                playerTurn = false;
             } else {
-                playsound("select_denied.wav");
+
+                if (thisGame.moveNum == 0) {
+                    errorMsg.hidden = false;
+                    playsound("click.mp3");
+                } else {
+                    playsound("select_denied.mp3");
+                }
+                
+
             }
-            playerTurn = false;
-        }
     }
 
 });
@@ -158,12 +166,12 @@ socket.on('p2-joined', function (game, self) {
 });
 
 socket.on('winner', function (winner) {
+    gameover = true;
     if (winner == "draw") {
         gameMsg.innerText = "Game Over: There is a Draw!"
         playsound("DrawGame.wav")
     } else {
         console.log("winner: " + winner);
-        gameover = true;
         winningPlayer = winner;
         if (winningPlayer == username) {
             playsound("LoseGame.wav")
@@ -187,7 +195,7 @@ socket.on('opponentMove', function (move, playerNumber, game) {
         setTimeout(() => { gameMsg.innerText = "It's " + thisGame.p1 + "'s turn to make a move." }, 2500)
     }
     drawBoard();
-    if(playerNumber == playerNum)
+    if (playerNumber == playerNum)
         playerTurn = true;
 });
 

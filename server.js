@@ -5,7 +5,7 @@ const io = require('socket.io')(server);
 
 app.use(express.static(__dirname + '/public'));
 
-let numOfgames = 0;
+let numOfgames = 1;
 let defaultBoardSize = 5;
 
 class Game {
@@ -16,13 +16,16 @@ class Game {
         this.p1 = "";
         this.p2 = "";
         this.turn = "p1";
-        // this.board = [3][3];
-        // this.board = [
-        //     ['', '', ''],
-        //     ['', '', ''],
-        //     ['', '', '']
-        // ];
+        this.moveNum = 0;
+        this.BoardSize = 5;
         this.board = [
+            ['', '', '', '', ''],
+            ['', '', '', '', ''],
+            ['', '', '', '', ''],
+            ['', '', '', '', ''],
+            ['', '', '', '', ''],
+        ];
+        this.moves = [
             ['', '', '', '', ''],
             ['', '', '', '', ''],
             ['', '', '', '', ''],
@@ -32,17 +35,27 @@ class Game {
     }
 }
 
-function checkWinner(board, size) {
-
+function checkWinner(board, size, playerNum) {
+    let marksInaRow = 0;
+    let firstElement;
+    if (playerNum == 2) {
+        firstElement = 'O'
+    } else if (playerNum == 1) {
+        firstElement = 'X'
+    }
     // Check rows
     for (let row = 0; row < size; row++) {
-        const firstElement = board[row][0];
+        // const firstElement  = board[row][0];
         let win = true;
         for (let col = 1; col < size; col++) {
+            if (marksInaRow > 3) {
+                break;
+            }
             if (board[row][col] !== firstElement) {
                 win = false;
                 break;
             }
+            marksInaRow++;
         }
         if (win) {
             return firstElement;
@@ -51,39 +64,67 @@ function checkWinner(board, size) {
 
     // Check columns
     for (let col = 0; col < size; col++) {
-        const firstElement = board[0][col];
+        // const firstElement  = board[0][col];
         let win = true;
+        marksInaRow = 0;
         for (let row = 1; row < size; row++) {
+            if (marksInaRow > 3) {
+                break;
+            }
             if (board[row][col] !== firstElement) {
                 win = false;
                 break;
             }
+            marksInaRow++;
         }
         if (win) {
             return firstElement;
         }
     }
 
+    let firstDiagonalElement;
+    if (playerNum == 2) {
+        firstDiagonalElement = 'O'
+    } else if (playerNum == 1) {
+        firstDiagonalElement = 'X'
+    }
+
     // Check diagonals
-    const firstDiagonalElement = board[0][0];
+    // const firstDiagonalElement = board[0][0];
     let firstDiagonalWin = true;
-    for (let i = 1; i < size; i++) {
+    marksInaRow = 0;
+    for (let i = 0; i < size; i++) {
+        if (marksInaRow > 3) {
+            break;
+        }
         if (board[i][i] !== firstDiagonalElement) {
             firstDiagonalWin = false;
             break;
         }
+        marksInaRow++;
     }
     if (firstDiagonalWin) {
         return firstDiagonalElement;
     }
 
-    const secondDiagonalElement = board[0][size - 1];
+    let secondDiagonalElement;
+    if (playerNum == 2) {
+        secondDiagonalElement = 'O'
+    } else if (playerNum == 1) {
+        secondDiagonalElement = 'X'
+    }
+    // const secondDiagonalElement = board[0][size - 1];
     let secondDiagonalWin = true;
-    for (let i = 1; i < size; i++) {
+    marksInaRow = 0;
+    for (let i = 0; i < size; i++) {
+        if (marksInaRow > 3) {
+            break;
+        }
         if (board[i][size - 1 - i] !== secondDiagonalElement) {
             secondDiagonalWin = false;
             break;
         }
+        marksInaRow++;
     }
     if (secondDiagonalWin) {
         return secondDiagonalElement;
@@ -98,33 +139,63 @@ var games = []
 io.on('connection', function (socket) {
     console.log('A user connected');
 
-    // Handle player move event
-    socket.on('player-move', function (data) {
-        // socket.broadcast.emit('opponent-move', data);
+    socket.emit("serverConnected", numOfgames);
 
-        socket.emit('opponent-move', data);
-    });
+    // // Handle player move event
+    // socket.on('player-move', function (data) {
+    //     // socket.broadcast.emit('opponent-move', data);
+
+    //     socket.emit('opponent-move', data);
+    // });
 
     // Handle player move event
-    socket.on('playerMove', function (row, col, nextTurn, thisGame) {
-        // socket.broadcast.emit('opponent-move', data);
+    socket.on('playerMove', function (row, col, nextTurn, playerNum, thisGame) {
+
         let game = games[thisGame.id];
+        if (game == null) {
+            return 0; //
+        }
         game.turn = nextTurn;
+        game.moveNum++;
+
         if (nextTurn == "p1") {
             game.board[row][col] = 'X';
-        } else {
+            game.moves[row][col] = 'X#' + game.moveNum;
+        }
+
+        if (nextTurn == "p2") {
             game.board[row][col] = 'O';
+            game.moves[row][col] = 'O#' + game.moveNum;
         }
 
         game.board = thisGame.board;
         let move = { row: row, col: col }
+
         if (nextTurn == "p1") {
-            io.to(game.p1Socket).emit('opponentMove', move, game);
-        } else {
-            io.to(game.p2Socket).emit('opponentMove', move, game);
+            io.to(game.p1Socket).emit('opponentMove', move, playerNum, game);
+            io.to(game.p2Socket).emit('opponentMove', move, playerNum, game);
         }
-        // socket.emit('opponentMove', move, game);
+
+        if (nextTurn == "p2") {
+            io.to(game.p2Socket).emit('opponentMove', move, playerNum, game);
+            io.to(game.p1Socket).emit('opponentMove', move, playerNum, game);
+        }
+
         console.log(nextTurn, "to move");
+
+        if (checkWinner(game.board, 5) == 'X') {
+            io.to(game.p1Socket).emit('winner', game.p1);
+            io.to(game.p2Socket).emit('winner', game.p1);
+        }
+        if (checkWinner(game.board, 5) == 'O') {
+            io.to(game.p1Socket).emit('winner', game.p2);
+            io.to(game.p2Socket).emit('winner', game.p2);
+        }
+        if (game.moveNum > game.boardSize * game.boardSize - 1) {
+            io.to(game.p1Socket).emit('winner', "draw");
+            io.to(game.p2Socket).emit('winner', "draw");
+        }
+
     });
 
     socket.on('disconnect', function () {
