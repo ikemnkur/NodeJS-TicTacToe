@@ -68,6 +68,9 @@ startBtn.addEventListener('click', function (e) {
         username = uInput.value;
         startBtn.style.background = "#FF3366"
     }
+    if (thisGame !== null){
+        drawBoard();
+    }
 });
 
 canvas.addEventListener('click', function (event) {
@@ -112,8 +115,6 @@ canvas.addEventListener('click', function (event) {
                 } else {
                     playsound("select_denied.mp3");
                 }
-                
-
             }
     }
 
@@ -165,7 +166,19 @@ socket.on('p2-joined', function (game, self) {
     }, 3000)
 });
 
+let newGameBtn = document.getElementById("newGameBtn");
+
+newGameBtn.addEventListener("click", () => {
+    gameover = false;
+    thisGame = new Game();
+    newGameBtn.hidden = true;
+    socket.emit('joinGame', uInput.value, boardSize);
+});
+
 socket.on('winner', function (winner) {
+    let winMsg = document.getElementById("winMsg");
+    let loseMsg = document.getElementById("loseMsg");
+    newGameBtn.hidden = false;
     gameover = true;
     if (winner == "draw") {
         gameMsg.innerText = "Game Over: There is a Draw!"
@@ -176,15 +189,19 @@ socket.on('winner', function (winner) {
         if (winningPlayer == username) {
             playsound("LoseGame.wav")
             gameMsg.innerText = "Game Over: You lose, " + winner + "has won!"
+            loseMsg.hidden = false;
         } else {
             gameMsg.innerText = "Game Over: You win, " + winner + "has won!"
+            winMsg.hidden = false;
             playsound("WinGame.wav")
         }
+        setTimeout(() => { gameMsg.hidden = true; }, 1000);
     }
 })
 
 socket.on('opponentMove', function (move, playerNumber, game) {
     thisGame = game;
+    errorMsg.hidden = true;
     if (playerNumber == 1) {
         thisGame.board[move.row][move.col] = 'X';
         gameMsg.innerText = "An 'X' had been placedon the board @: [" + move.row + "][" + move.col + "]";
@@ -250,63 +267,3 @@ function drawBoard() {
 
 drawBoard();
 
-function checkWinner(board, size) {
-
-    // Check rows
-    for (let row = 0; row < size; row++) {
-        const firstElement = board[row][0];
-        let win = true;
-        for (let col = 1; col < size; col++) {
-            if (board[row][col] !== firstElement) {
-                win = false;
-                break;
-            }
-        }
-        if (win) {
-            return firstElement;
-        }
-    }
-
-    // Check columns
-    for (let col = 0; col < size; col++) {
-        const firstElement = board[0][col];
-        let win = true;
-        for (let row = 1; row < size; row++) {
-            if (board[row][col] !== firstElement) {
-                win = false;
-                break;
-            }
-        }
-        if (win) {
-            return firstElement;
-        }
-    }
-
-    // Check diagonals
-    const firstDiagonalElement = board[0][0];
-    let firstDiagonalWin = true;
-    for (let i = 1; i < size; i++) {
-        if (board[i][i] !== firstDiagonalElement) {
-            firstDiagonalWin = false;
-            break;
-        }
-    }
-    if (firstDiagonalWin) {
-        return firstDiagonalElement;
-    }
-
-    const secondDiagonalElement = board[0][size - 1];
-    let secondDiagonalWin = true;
-    for (let i = 1; i < size; i++) {
-        if (board[i][size - 1 - i] !== secondDiagonalElement) {
-            secondDiagonalWin = false;
-            break;
-        }
-    }
-    if (secondDiagonalWin) {
-        return secondDiagonalElement;
-    }
-
-    // No winner
-    return null;
-}

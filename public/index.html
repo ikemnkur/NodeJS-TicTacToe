@@ -8,7 +8,8 @@
 </head>
 
 <body>
-  <div id="form" style="padding: 10px; margin: 10px; border: 5px solid; border-radius: 5px; background-color: lavender;">
+  <div id="form"
+    style="padding: 10px; margin: 10px; border: 5px solid; border-radius: 5px; background-color: lavender;">
     <div style="padding: 5px;">
       <label> Username: </label>
       <input id="usernameInput" type="text">
@@ -17,9 +18,12 @@
     <div style="padding: 5px;">
       <p id="startErrorMsg" hidden style="color: red;">Error: Type a Username</p>
       <p id="searchMsg" hidden style="color: #dab901;">Searching for a Player...</p>
-      <p id="foundMsg" hidden style="color: green;">A player has been found! A New Game has Begun.</p> 
+      <p id="foundMsg" hidden style="color: green;">A player has been found! A New Game has Begun.</p>
       <p id="gameMsg" hidden style="color: black;">Begin</p>
+      <p id="winMsg" hidden style="color: rgb(71, 192, 1); font-size: 20px; font-weight: bold;">YOU WON!!!</p>
+      <p id="loseMsg" hidden style="color: rgb(206, 0, 0); font-size: 20px; font-weight: bold;">YOU LOST!!!</p>
     </div>
+    <button hidden id="newGameBtn" style="padding: 10px; margin: 10px; background: lightcyan;"> New Game </button>
     <div>
       <text style="padding: 5px; ">
         GAME ID:
