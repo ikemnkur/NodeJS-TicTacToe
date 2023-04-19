@@ -37,97 +37,101 @@ class Game {
 
 function checkWinner(board, size, playerNum) {
     let marksInaRow = 0;
-    let firstElement;
+    let element;
     if (playerNum == 2) {
-        firstElement = 'O'
+        element = 'O'
     } else if (playerNum == 1) {
-        firstElement = 'X'
+        element = 'X'
     }
+
     // Check rows
     for (let row = 0; row < size; row++) {
-        // const firstElement  = board[row][0];
-        let win = true;
-        for (let col = 1; col < size; col++) {
+        let win = false;
+        for (let col = 0; col < size; col++) {
             if (marksInaRow > 3) {
+                win = true;
                 break;
             }
-            if (board[row][col] !== firstElement) {
-                win = false;
-                break;
+            if (board[row][col] == element) {
+                marksInaRow++;
+            } else {
+                marksInaRow = 0;
             }
-            marksInaRow++;
         }
         if (win) {
-            return firstElement;
+            console.log(element, " wins!!!")
+            return element;
         }
     }
 
     // Check columns
     for (let col = 0; col < size; col++) {
-        // const firstElement  = board[0][col];
-        let win = true;
+        let win = false;
         marksInaRow = 0;
-        for (let row = 1; row < size; row++) {
+        for (let row = 0; row < size; row++) {
             if (marksInaRow > 3) {
+                win = true;
                 break;
             }
-            if (board[row][col] !== firstElement) {
-                win = false;
-                break;
+            if (board[row][col] == element) {
+                marksInaRow++;
+            } else {
+                marksInaRow = 0;
             }
-            marksInaRow++;
         }
         if (win) {
-            return firstElement;
+            return element;
         }
     }
 
-    let firstDiagonalElement;
-    if (playerNum == 2) {
-        firstDiagonalElement = 'O'
-    } else if (playerNum == 1) {
-        firstDiagonalElement = 'X'
-    }
+    // let element;
+    // if (playerNum == 2) {
+    //     element = 'O'
+    // } else if (playerNum == 1) {
+    //     element = 'X'
+    // }
 
     // Check diagonals
-    // const firstDiagonalElement = board[0][0];
-    let firstDiagonalWin = true;
+    let diagWin = false;
     marksInaRow = 0;
     for (let i = 0; i < size; i++) {
         if (marksInaRow > 3) {
+            diagWin = true;
             break;
         }
-        if (board[i][i] !== firstDiagonalElement) {
-            firstDiagonalWin = false;
-            break;
+        if (board[i][i] == element) {
+            marksInaRow++;
+        } else {
+            marksInaRow = 0;
         }
         marksInaRow++;
     }
-    if (firstDiagonalWin) {
-        return firstDiagonalElement;
+    if (diagWin) {
+        return element;
     }
 
-    let secondDiagonalElement;
-    if (playerNum == 2) {
-        secondDiagonalElement = 'O'
-    } else if (playerNum == 1) {
-        secondDiagonalElement = 'X'
-    }
-    // const secondDiagonalElement = board[0][size - 1];
-    let secondDiagonalWin = true;
+    // let secondDiagonalElement;
+    // if (playerNum == 2) {
+    //     secondDiagonalElement = 'O'
+    // } else if (playerNum == 1) {
+    //     secondDiagonalElement = 'X'
+    // }
+    diagWin = false;
     marksInaRow = 0;
     for (let i = 0; i < size; i++) {
         if (marksInaRow > 3) {
+            diagWin = true;
             break;
         }
-        if (board[i][size - 1 - i] !== secondDiagonalElement) {
-            secondDiagonalWin = false;
-            break;
+        if (board[i][size - 1 - i] == element) {
+            marksInaRow++;
+        } else {
+            marksInaRow = 0;
         }
         marksInaRow++;
     }
-    if (secondDiagonalWin) {
-        return secondDiagonalElement;
+    if (diagWin) {
+        return diagWin;
     }
 
     // No winner
@@ -183,15 +187,15 @@ io.on('connection', function (socket) {
 
         console.log(nextTurn, "to move");
 
-        if (checkWinner(game.board, 5) == 'X') {
+        if (checkWinner(game.board, 5, 1) == 'X') {
             io.to(game.p1Socket).emit('winner', game.p1);
             io.to(game.p2Socket).emit('winner', game.p1);
         }
-        if (checkWinner(game.board, 5) == 'O') {
+        if (checkWinner(game.board, 5, 2) == 'O') {
             io.to(game.p1Socket).emit('winner', game.p2);
             io.to(game.p2Socket).emit('winner', game.p2);
         }
-        if (game.moveNum > game.boardSize * game.boardSize - 1) {
+        if (game.moveNum >= (game.boardSize * game.boardSize - 2)) {
             io.to(game.p1Socket).emit('winner', "draw");
             io.to(game.p2Socket).emit('winner', "draw");
         }
