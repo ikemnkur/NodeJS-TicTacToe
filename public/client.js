@@ -12,6 +12,9 @@ var soundIsplaying = false;
 let gameMsg = document.getElementById('gameMsg');
 const searchMsg = document.getElementById('searchMsg');
 const errorMsg = document.getElementById('startErrorMsg');
+const turnErrorMsg = document.getElementById('turnErrorMsg');
+const winMsg = document.getElementById('winMsg');
+const loseMsg = document.getElementById('loseMsg');
 
 class Game {
     constructor() {
@@ -68,7 +71,7 @@ startBtn.addEventListener('click', function (e) {
         username = uInput.value;
         startBtn.style.background = "#FF3366"
     }
-    if (thisGame !== null){
+    if (thisGame !== null) {
         drawBoard();
     }
 });
@@ -109,10 +112,13 @@ canvas.addEventListener('click', function (event) {
                 playerTurn = false;
             } else {
 
-                if (thisGame.moveNum == 0) {
+                if (thisGame.moveNum == 0 & username == "") {
                     errorMsg.hidden = false;
+                    setTimeout(() => { errorMsg.hidden = true; }, 2000);
                     playsound("click.mp3");
-                } else {
+                } else if (!gameover) {
+                    turnErrorMsg.hidden = false;
+                    setTimeout(() => { turnErrorMsg.hidden = true; }, 2000);
                     playsound("select_denied.mp3");
                 }
             }
@@ -164,6 +170,7 @@ socket.on('p2-joined', function (game, self) {
         foundMsg.hidden = true;
         gameMsg.hidden = false;
     }, 3000)
+    drawBoard();
 });
 
 let newGameBtn = document.getElementById("newGameBtn");
@@ -171,14 +178,17 @@ let newGameBtn = document.getElementById("newGameBtn");
 newGameBtn.addEventListener("click", () => {
     gameover = false;
     thisGame = new Game();
+    loseMsg.hidden = true;
+    winMsg.hidden = true;
+    gameMsg.hidden = true;
+    drawBoard();
     newGameBtn.hidden = true;
     socket.emit('joinGame', uInput.value, boardSize);
 });
 
 socket.on('winner', function (winner) {
-    let winMsg = document.getElementById("winMsg");
-    let loseMsg = document.getElementById("loseMsg");
     newGameBtn.hidden = false;
+    gameMsg.hidden = false;
     gameover = true;
     if (winner == "draw") {
         gameMsg.innerText = "Game Over: There is a Draw!"
@@ -195,7 +205,7 @@ socket.on('winner', function (winner) {
             winMsg.hidden = false;
             playsound("WinGame.wav")
         }
-        setTimeout(() => { gameMsg.hidden = true; }, 1000);
+        setTimeout(() => { gameMsg.hidden = true; errorMsg.hidden = true; turnErrorMsg.hidden = true; }, 3000);
     }
 })
 

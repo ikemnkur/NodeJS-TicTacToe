@@ -59,7 +59,7 @@ function checkWinner(board, size, playerNum) {
             }
         }
         if (win) {
-            console.log(element, " wins!!!")
+            console.log(element, " wins!!!, 4 in a column")
             return element;
         }
     }
@@ -80,6 +80,7 @@ function checkWinner(board, size, playerNum) {
             }
         }
         if (win) {
+            console.log(element, " wins!!!, 4 in a row")
             return element;
         }
     }
@@ -92,11 +93,11 @@ function checkWinner(board, size, playerNum) {
     // }
 
     // Check diagonals
-    let diagWin = false;
+    let diagWinUp = false;
     marksInaRow = 0;
     for (let i = 0; i < size; i++) {
         if (marksInaRow > 3) {
-            diagWin = true;
+            diagWinUp = true;
             break;
         }
         if (board[i][i] == element) {
@@ -104,23 +105,17 @@ function checkWinner(board, size, playerNum) {
         } else {
             marksInaRow = 0;
         }
-        marksInaRow++;
     }
-    if (diagWin) {
+    if (diagWinUp) {
+         console.log(element, " wins!!!, 4 in a diagonal (sloped up)")
         return element;
     }
 
-    // let secondDiagonalElement;
-    // if (playerNum == 2) {
-    //     secondDiagonalElement = 'O'
-    // } else if (playerNum == 1) {
-    //     secondDiagonalElement = 'X'
-    // }
-    diagWin = false;
+    let diagWinDown = false;
     marksInaRow = 0;
     for (let i = 0; i < size; i++) {
         if (marksInaRow > 3) {
-            diagWin = true;
+            diagWinDown = true;
             break;
         }
         if (board[i][size - 1 - i] == element) {
@@ -128,10 +123,10 @@ function checkWinner(board, size, playerNum) {
         } else {
             marksInaRow = 0;
         }
-        marksInaRow++;
     }
-    if (diagWin) {
-        return diagWin;
+    if (diagWinDown) {
+        console.log(element, " wins!!!, 4 in a diagonal")
+        return element;
     }
 
     // No winner
