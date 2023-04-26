@@ -4,7 +4,7 @@ const startBtn = document.getElementById('startBtn');
 const uInput = document.getElementById('usernameInput');
 var username = "";
 var playerNum = "";
-let boardSize = 5;
+let boardSize = 7;
 let winningPlayer = "";
 let gameover = false;
 let size = canvas.width / boardSize;
@@ -23,20 +23,24 @@ class Game {
         this.p2 = "";
         this.turn = "p1";
         this.moveNum = 0;
-        this.boardSize = 5;
+        this.boardSize = 7;
         this.board = [
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
         ];
         this.moves = [
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
         ];
     }
 }
@@ -85,6 +89,13 @@ canvas.addEventListener('click', function (event) {
     const col = Math.floor(x / size);
 
     if (thisGame == null) {
+        let oldMSg = errorMsg.innerText;
+        errorMsg.innerText = "Fisrt Start A Game.";
+        errorMsg.hidden = false;
+        setTimeout(() => {
+            errorMsg.hidden = true;
+            errorMsg.innerText = oldMSg;
+        }, 2000);
         playsound("click.mp3");
         return false;
     }
@@ -96,32 +107,38 @@ canvas.addEventListener('click', function (event) {
                 drawBoard();
                 socket.emit('playerMove', row, col, turn, playerNum, thisGame);
                 playsound("select.wav");
-                gameMsg.innerText = "It's " + thisGame.p2 + "'s turn to make a move."
-            }
-            playerTurn = false;
-        } else
-            if (thisGame.turn == "p2" & username == thisGame.p2) {
-                if (thisGame.board[row][col] === '') {
-                    let turn = "p1";
-                    thisGame.board[row][col] = "O";
-                    drawBoard();
-                    socket.emit('playerMove', row, col, turn, playerNum, thisGame);
-                    playsound("select.wav");
-
+                if (username == thisGame.p2) {
+                    gameMsg.innerText = "It's " + your + "'s turn to make a move."
+                } else {
+                    gameMsg.innerText = "It's " + thisGame.p2 + "'s turn to make a move."
                 }
                 playerTurn = false;
-            } else {
-
-                if (thisGame.moveNum == 0 & username == "") {
-                    errorMsg.hidden = false;
-                    setTimeout(() => { errorMsg.hidden = true; }, 2000);
-                    playsound("click.mp3");
-                } else if (!gameover) {
-                    turnErrorMsg.hidden = false;
-                    setTimeout(() => { turnErrorMsg.hidden = true; }, 2000);
-                    playsound("select_denied.mp3");
-                }
             }
+        } else if (thisGame.turn == "p2" & username == thisGame.p2) {
+            if (thisGame.board[row][col] === '') {
+                let turn = "p1";
+                thisGame.board[row][col] = "O";
+                drawBoard();
+                socket.emit('playerMove', row, col, turn, playerNum, thisGame);
+                playsound("select.wav");
+                if (username == thisGame.p2) {
+                    gameMsg.innerText = "It's " + your + "'s turn to make a move."
+                } else {
+                    gameMsg.innerText = "It's " + thisGame.p2 + "'s turn to make a move."
+                }
+                playerTurn = false;
+            }
+        } else {
+            if (thisGame.moveNum == 0 & username == "") { //if no moves have been made yet and the user has not started searching for a game yet
+                errorMsg.hidden = false;
+                setTimeout(() => { errorMsg.hidden = true; }, 2000);
+                playsound("click.mp3");
+            } else if (!gameover) { // if game is not over
+                turnErrorMsg.hidden = false;
+                setTimeout(() => { turnErrorMsg.hidden = true; }, 2000);
+                playsound("badMove.wav");
+            }
+        }
     }
 
 });
@@ -171,6 +188,7 @@ socket.on('p2-joined', function (game, self) {
         gameMsg.hidden = false;
     }, 3000)
     drawBoard();
+    playsound("GameStart.mp3")
 });
 
 let newGameBtn = document.getElementById("newGameBtn");
@@ -196,7 +214,7 @@ socket.on('winner', function (winner) {
     } else {
         console.log("winner: " + winner);
         winningPlayer = winner;
-        if (winningPlayer == username) {
+        if (winningPlayer != username) {
             playsound("LoseGame.wav")
             gameMsg.innerText = "Game Over: You lose, " + winner + "has won!"
             loseMsg.hidden = false;
@@ -222,39 +240,60 @@ socket.on('opponentMove', function (move, playerNumber, game) {
         setTimeout(() => { gameMsg.innerText = "It's " + thisGame.p1 + "'s turn to make a move." }, 2500)
     }
     drawBoard();
-    if (playerNumber == playerNum)
+    if (playerNumber == playerNum) {
         playerTurn = true;
+        playsound("newTurn.wav")
+    }
+
 });
 
 function drawBoard() {
     //Clear the board
     context.clearRect(0, 0, canvas.width, canvas.height);
 
+
     // Draw X's and O's
     for (let row = 0; row < boardSize; row++) {
         for (let col = 0; col < boardSize; col++) {
             const value = thisGame.board[row][col];
-            const x = col * 100 + 50;
-            const y = row * 100 + 50;
+            const x = col * size + size / 2;
+            const y = row * size + size / 2;
 
             //set line thickness for the X's and O's
             context.lineWidth = 3;
             if (value == 'X') {
                 //color is greenish
-                context.fillStyle = "#33FF33";
-                context.moveTo(x - 30, y - 30);
-                context.lineTo(x + 30, y + 30);
-                context.moveTo(x + 30, y - 30);
-                context.lineTo(x - 30, y + 30);
+                // context.fillStyle = "#33FF33";
+                // context.moveTo(x - 30, y - 30);
+                // context.lineTo(x + 30, y + 30);
+                // context.moveTo(x + 30, y - 30);
+                // context.lineTo(x - 30, y + 30);
+                // context.stroke();
+
+                context.beginPath();
+                context.arc(x, y, 25, 0, 2 * Math.PI, false);
+                context.fillStyle = 'green';
+                context.fill();
+                context.lineWidth = 5;
+                context.strokeStyle = '#003300';
                 context.stroke();
             }
             if (value == 'O') {
                 // color is reddish
-                context.fillStyle = "#FF3333";
+                // context.fillStyle = "#FF3333";
+                // context.beginPath();
+                // context.arc(x, y, 30, 0, Math.PI * 2);
+                // context.stroke();
+
                 context.beginPath();
-                context.arc(x, y, 30, 0, Math.PI * 2);
+                context.arc(x, y, 25, 0, 2 * Math.PI, false);
+                context.fillStyle = 'red';
+                context.fill();
+                context.lineWidth = 5;
+                context.strokeStyle = '#330000';
                 context.stroke();
             }
+
             //reset the fill color and line thickness
             context.fillStyle = "#000000";
             context.lineWidth = 1;
@@ -264,12 +303,13 @@ function drawBoard() {
     context.beginPath();
 
     for (var i = 1; i < boardSize; i++) {
+        let dist = canvas.width / boardSize;
         // Draw vertical lines
-        context.moveTo(100 * i, 0);
-        context.lineTo(100 * i, canvas.height);
+        context.moveTo(dist * i, 0);
+        context.lineTo(dist * i, canvas.height);
         // Draw horizontal lines
-        context.moveTo(0, 100 * i);
-        context.lineTo(canvas.width, 100 * i);
+        context.moveTo(0, dist * i);
+        context.lineTo(canvas.width, dist * i);
     }
 
     context.stroke();

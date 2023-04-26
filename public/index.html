@@ -15,7 +15,21 @@
       <input id="usernameInput" type="text">
       <button id="startBtn"> Start A Match </button>
     </div>
-    <div style="padding: 5px;">
+    <div class="playersInfo">
+      <div>
+        <text style="padding: 5px; ">
+          GAME ID:
+          <text id="gameID">#XXXX</text></text>
+      </div>
+      <div id="pvpInfo" style="padding: 5px;">
+        <text class="P1">P1:</text>
+        <text class="P1" id="p1Txt">User1</text>
+        <text style="color: blue; padding: 0px 5px 0px 5px;">-Versus- </text>
+        <text class="P2">P2:</text>
+        <text class="P2" id="p2Txt">User2</text>
+      </div>
+    </div>
+    <div style="padding: 5px;" background="gray">
       <p id="turnErrorMsg" hidden style="color: red;">Error: Its not your turn yet.</p>
       <p id="startErrorMsg" hidden style="color: red;">Error: Type a Username</p>
       <p id="searchMsg" hidden style="color: #dab901;">Searching for a Player...</p>
@@ -24,19 +38,8 @@
       <p id="winMsg" hidden style="color: rgb(71, 192, 1); font-size: 20px; font-weight: bold;">YOU WON!!!</p>
       <p id="loseMsg" hidden style="color: rgb(206, 0, 0); font-size: 20px; font-weight: bold;">YOU LOST!!!</p>
     </div>
-    <button hidden id="newGameBtn" style="padding: 10px; margin: 10px; background: lightcyan;"> New Game </button>
-    <div>
-      <text style="padding: 5px; ">
-        GAME ID:
-        <text id="gameID">#XXXX</text></text>
-    </div>
-    <div id="pvpInfo" style="padding: 5px;">
-      <text class="P1">P1:</text>
-      <text class="P1" id="p1Txt">User1</text>
-      <text style="color: red; padding: 0px 5px 0px 5px;">-Versus- </text>
-      <text class="P2">P2:</text>
-      <text class="P2" id="p2Txt">User2</text>
-    </div>
+    <button hidden id="newGameBtn" style="padding: 10px; margin: 5px; background: lightcyan;"> New Game </button>
+
   </div>
   <div style="padding: 20px;">
     <canvas id="canvas" width="500" height="500"></canvas>

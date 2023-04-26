@@ -6,7 +6,7 @@ const io = require('socket.io')(server);
 app.use(express.static(__dirname + '/public'));
 
 let numOfgames = 1;
-let defaultBoardSize = 5;
+let defaultBoardSize = 7;
 
 class Game {
     constructor() {
@@ -16,21 +16,30 @@ class Game {
         this.p1 = "";
         this.p2 = "";
         this.turn = "p1";
+        this.startTime = new Date();
+        this.endTime = new Date() + 1000 * 60 * 6;
+        this.p1time = 0;
+        this.p2time = 0;
+        this.gameTime = "";
         this.moveNum = 0;
-        this.BoardSize = 5;
+        this.BoardSize = 7;
         this.board = [
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
         ];
         this.moves = [
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
         ];
     }
 }
@@ -93,41 +102,61 @@ function checkWinner(board, size, playerNum) {
     // }
 
     // Check diagonals
-    let diagWinUp = false;
-    marksInaRow = 0;
-    for (let i = 0; i < size; i++) {
-        if (marksInaRow > 3) {
-            diagWinUp = true;
-            break;
-        }
-        if (board[i][i] == element) {
-            marksInaRow++;
-        } else {
-            marksInaRow = 0;
-        }
-    }
-    if (diagWinUp) {
-         console.log(element, " wins!!!, 4 in a diagonal (sloped up)")
-        return element;
-    }
+    // let diagWinUp = false;
+    // marksInaRow = 0;
+    // let b = board;
+    // for (let j = 0; j < size; j++) {
+    //     for (let i = 0; i < size; i++) {
+    //         if (marksInaRow > 3) {
+    //             diagWinUp = true;
+    //             break;
+    //         }
+    //         if (board[i + j][i + 3] == element) {
+    //             marksInaRow++;
+    //         } else {
+    //             marksInaRow = 0;
+    //         }
+    //     }
+    // }
 
-    let diagWinDown = false;
-    marksInaRow = 0;
-    for (let i = 0; i < size; i++) {
-        if (marksInaRow > 3) {
-            diagWinDown = true;
-            break;
-        }
-        if (board[i][size - 1 - i] == element) {
-            marksInaRow++;
-        } else {
-            marksInaRow = 0;
-        }
-    }
-    if (diagWinDown) {
-        console.log(element, " wins!!!, 4 in a diagonal")
-        return element;
-    }
+    // if (b[0][3] == b[1][4] == b[2][5] == b[3][6] == element)
+    //     return element;
+    // if (b[0][2] == b[1][3] == b[2][4] == b[3][5-] == element)
+    //     return element;
+
+    // for (let i = 0; i < size; i++) {
+    //     if (marksInaRow > 3) {
+    //         diagWinUp = true;
+    //         break;
+    //     }
+    //     if (board[i][i] == element) {
+    //         marksInaRow++;
+    //     } else {
+    //         marksInaRow = 0;
+    //     }
+    // }
+    // if (diagWinUp) {
+    //     console.log(element, " wins!!!, 4 in a diagonal (sloped up)")
+    //     return element;
+    // }
+
+    // let diagWinDown = false;
+    // marksInaRow = 0;
+    // for (let i = 0; i < size; i++) {
+    //     if (marksInaRow > 3) {
+    //         diagWinDown = true;
+    //         break;
+    //     }
+    //     if (board[i][size - 1 - i] == element) {
+    //         marksInaRow++;
+    //     } else {
+    //         marksInaRow = 0;
+    //     }
+    // }
+    // if (diagWinDown) {
+    //     console.log(element, " wins!!!, 4 in a diagonal")
+    //     return element;
+    // }
 
     // No winner
     return null;
@@ -182,19 +211,18 @@ io.on('connection', function (socket) {
 
         console.log(nextTurn, "to move");
 
-        if (checkWinner(game.board, 5, 1) == 'X') {
+        if (checkWinner(game.board, game.BoardSize, 1) == 'X') {
             io.to(game.p1Socket).emit('winner', game.p1);
             io.to(game.p2Socket).emit('winner', game.p1);
         }
-        if (checkWinner(game.board, 5, 2) == 'O') {
+        if (checkWinner(game.board, game.BoardSize, 2) == 'O') {
             io.to(game.p1Socket).emit('winner', game.p2);
             io.to(game.p2Socket).emit('winner', game.p2);
         }
-        if (game.moveNum >= (game.boardSize * game.boardSize - 2)) {
+        if (game.moveNum >= (game.BoardSize * game.BoardSize - 2)) {
             io.to(game.p1Socket).emit('winner', "draw");
             io.to(game.p2Socket).emit('winner', "draw");
         }
-
     });
 
     socket.on('disconnect', function () {
@@ -208,7 +236,6 @@ io.on('connection', function (socket) {
             game.id = numOfgames;
             game.p1 = playerUsername;
             games[numOfgames] = game;
-            // game.board = [boardSize][boardSize];
 
             //store the socketId for this user
             game.p1Socket = socket.id;
