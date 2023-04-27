@@ -4,8 +4,9 @@ const startBtn = document.getElementById('startBtn');
 const uInput = document.getElementById('usernameInput');
 var username = "";
 var playerNum = "";
-let boardSize = 5;
+let boardSize = 7;
 let winningPlayer = "";
+let gamestart = false;
 let gameover = false;
 let size = canvas.width / boardSize;
 var soundIsplaying = false;
@@ -23,20 +24,24 @@ class Game {
         this.p2 = "";
         this.turn = "p1";
         this.moveNum = 0;
-        this.boardSize = 5;
+        this.boardSize = 7;
         this.board = [
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
         ];
         this.moves = [
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
-            ['', '', '', '', ''],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
+            ['', '', '', '', '', '', '',],
         ];
     }
 }
@@ -84,11 +89,18 @@ canvas.addEventListener('click', function (event) {
     const row = Math.floor(y / size);
     const col = Math.floor(x / size);
 
-    if (thisGame == null) {
+    if (gamestart == false) { // if game is not started, meaning player2 is not joined
+        let oldMSg = errorMsg.innerText;
+        errorMsg.innerText = "First Start A Game. Then wait for another player to join.";
+        errorMsg.hidden = false;
+        setTimeout(() => {
+            errorMsg.hidden = true;
+            errorMsg.innerText = oldMSg;
+        }, 3000);
         playsound("click.mp3");
         return false;
     }
-    if (playerTurn && !gameover) {
+    if (playerTurn && gameover == false) {
         if (thisGame.turn == "p1" & username == thisGame.p1) {
             if (thisGame.board[row][col] === '') {
                 let turn = "p2";
@@ -96,32 +108,38 @@ canvas.addEventListener('click', function (event) {
                 drawBoard();
                 socket.emit('playerMove', row, col, turn, playerNum, thisGame);
                 playsound("select.wav");
-                gameMsg.innerText = "It's " + thisGame.p2 + "'s turn to make a move."
-            }
-            playerTurn = false;
-        } else
-            if (thisGame.turn == "p2" & username == thisGame.p2) {
-                if (thisGame.board[row][col] === '') {
-                    let turn = "p1";
-                    thisGame.board[row][col] = "O";
-                    drawBoard();
-                    socket.emit('playerMove', row, col, turn, playerNum, thisGame);
-                    playsound("select.wav");
-
+                if (username == thisGame.p2) {
+                    gameMsg.innerText = "It's your turn to make a move."
+                } else {
+                    gameMsg.innerText = "It's " + thisGame.p2 + "'s turn to make a move."
                 }
                 playerTurn = false;
-            } else {
-
-                if (thisGame.moveNum == 0 & username == "") {
-                    errorMsg.hidden = false;
-                    setTimeout(() => { errorMsg.hidden = true; }, 2000);
-                    playsound("click.mp3");
-                } else if (!gameover) {
-                    turnErrorMsg.hidden = false;
-                    setTimeout(() => { turnErrorMsg.hidden = true; }, 2000);
-                    playsound("select_denied.mp3");
-                }
             }
+        } else if (thisGame.turn == "p2" & username == thisGame.p2) {
+            if (thisGame.board[row][col] === '') {
+                let turn = "p1";
+                thisGame.board[row][col] = "O";
+                drawBoard();
+                socket.emit('playerMove', row, col, turn, playerNum, thisGame);
+                playsound("select.wav");
+                if (username == thisGame.p2) {
+                    gameMsg.innerText = "It's your turn to make a move."
+                } else {
+                    gameMsg.innerText = "It's " + thisGame.p2 + "'s turn to make a move."
+                }
+                playerTurn = false;
+            }
+        } else {
+            if (thisGame.moveNum == 0 & username == "") { //if no moves have been made yet and the user has not started searching for a game yet
+                errorMsg.hidden = false;
+                setTimeout(() => { errorMsg.hidden = true; }, 2000);
+                playsound("click.mp3");
+            } else if (gameover == false) { // if game is not over
+                turnErrorMsg.hidden = false;
+                setTimeout(() => { turnErrorMsg.hidden = true; }, 2000);
+                playsound("badMove.wav");
+            }
+        }
     }
 
 });
@@ -171,7 +189,37 @@ socket.on('p2-joined', function (game, self) {
         gameMsg.hidden = false;
     }, 3000)
     drawBoard();
+    playsound("GameStart.mp3");
+    gamestart = true;
+    timeControl();
+
 });
+
+let updateTime = false;
+
+setInterval(function () { timeControl(); }, 1000);
+
+function timeControl() {
+    if (gameover == false && gamestart == true) {
+        if (thisGame.turn == "p1") {
+            thisGame.p1time++;
+        } else if (thisGame.turn == "p2") {
+            thisGame.p2time++;
+        }
+        var p1time = document.getElementById("p1time");
+        let t1 = Math.floor(thisGame.p1time / 60) + ":" + (thisGame.p1time % 60);
+        if ((thisGame.p1time % 60) < 10)
+            t1 = Math.floor(thisGame.p1time / 60) + ":0" + (thisGame.p1time % 60);
+        p1time.innerText = t1;
+        // console.log("p1 time: " + t1)
+        var p2time = document.getElementById("p2time");
+        let t2 = Math.floor(thisGame.p2time / 60) + ":" + (thisGame.p2time % 60);
+        if ((thisGame.p2time % 60) < 10)
+            t1 = Math.floor(thisGame.p2time / 60) + ":0" + (thisGame.p2time % 60);
+        p2time.innerText = t2;
+        // console.log("p2 time: " + t2)
+    }
+}
 
 let newGameBtn = document.getElementById("newGameBtn");
 
@@ -189,6 +237,7 @@ newGameBtn.addEventListener("click", () => {
 socket.on('winner', function (winner) {
     newGameBtn.hidden = false;
     gameMsg.hidden = false;
+    gamestart = false;
     gameover = true;
     if (winner == "draw") {
         gameMsg.innerText = "Game Over: There is a Draw!"
@@ -221,9 +270,15 @@ socket.on('opponentMove', function (move, playerNumber, game) {
         gameMsg.innerText = "An 'O' had been placed on the board at: [" + move.row + "][" + move.col + "]";
         setTimeout(() => { gameMsg.innerText = "It's " + thisGame.p1 + "'s turn to make a move." }, 2500)
     }
+    // updateTime = true;
+    timeControl();
     drawBoard();
-    if (playerNumber == playerNum)
+    if (playerNumber == playerNum) {
         playerTurn = true;
+    } else {
+        playsound("newTurn.wav");
+    }
+
 });
 
 function drawBoard() {
@@ -234,25 +289,41 @@ function drawBoard() {
     for (let row = 0; row < boardSize; row++) {
         for (let col = 0; col < boardSize; col++) {
             const value = thisGame.board[row][col];
-            const x = col * 100 + 50;
-            const y = row * 100 + 50;
+            const x = col * size + size / 2;
+            const y = row * size + size / 2;
 
             //set line thickness for the X's and O's
             context.lineWidth = 3;
             if (value == 'X') {
                 //color is greenish
-                context.fillStyle = "#33FF33";
-                context.moveTo(x - 30, y - 30);
-                context.lineTo(x + 30, y + 30);
-                context.moveTo(x + 30, y - 30);
-                context.lineTo(x - 30, y + 30);
+                // context.fillStyle = "#33FF33";
+                // context.moveTo(x - 30, y - 30);
+                // context.lineTo(x + 30, y + 30);
+                // context.moveTo(x + 30, y - 30);
+                // context.lineTo(x - 30, y + 30);
+                // context.stroke();
+
+                context.beginPath();
+                context.arc(x, y, 25, 0, 2 * Math.PI, false);
+                context.fillStyle = 'green';
+                context.fill();
+                context.lineWidth = 5;
+                context.strokeStyle = '#006600';
                 context.stroke();
             }
             if (value == 'O') {
                 // color is reddish
-                context.fillStyle = "#FF3333";
+                // context.fillStyle = "#FF3333";
+                // context.beginPath();
+                // context.arc(x, y, 30, 0, Math.PI * 2);
+                // context.stroke();
+
                 context.beginPath();
-                context.arc(x, y, 30, 0, Math.PI * 2);
+                context.arc(x, y, 25, 0, 2 * Math.PI, false);
+                context.fillStyle = 'red';
+                context.fill();
+                context.lineWidth = 5;
+                context.strokeStyle = '#660000';
                 context.stroke();
             }
             //reset the fill color and line thickness
@@ -263,13 +334,16 @@ function drawBoard() {
 
     context.beginPath();
 
+    context.strokeStyle = 'black';
+    context.lineWidth = 3;
     for (var i = 1; i < boardSize; i++) {
+        let dist = canvas.width / boardSize;
         // Draw vertical lines
-        context.moveTo(100 * i, 0);
-        context.lineTo(100 * i, canvas.height);
+        context.moveTo(dist * i, 0);
+        context.lineTo(dist * i, canvas.height);
         // Draw horizontal lines
-        context.moveTo(0, 100 * i);
-        context.lineTo(canvas.width, 100 * i);
+        context.moveTo(0, dist * i);
+        context.lineTo(canvas.width, dist * i);
     }
 
     context.stroke();
