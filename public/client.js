@@ -305,7 +305,7 @@ function drawBoard() {
 
                 context.beginPath();
                 context.arc(x, y, 25, 0, 2 * Math.PI, false);
-                // context.fillStyle = 'green';
+                context.fillStyle = 'green';
                 context.fill();
                 context.lineWidth = 5;
                 context.strokeStyle = '#006600';
@@ -320,7 +320,7 @@ function drawBoard() {
 
                 context.beginPath();
                 context.arc(x, y, 25, 0, 2 * Math.PI, false);
-                // context.fillStyle = 'red';
+                context.fillStyle = 'red';
                 context.fill();
                 context.lineWidth = 5;
                 context.strokeStyle = '#660000';
