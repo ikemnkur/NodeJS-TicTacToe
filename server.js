@@ -17,10 +17,12 @@ class Game {
         this.p2 = "";
         this.turn = "p1";
         this.startTime = new Date();
-        this.endTime = new Date() + 1000 * 60 * 6;
+        this.endTime = new Date(); 
+        this.endTime.setDate(this.endTime.getTime() + 1000*60*5);
+        this.mvStartTime = new Date();
+        this.mvEndTime = new Date();
         this.p1time = 0;
         this.p2time = 0;
-        this.gameTime = "";
         this.moveNum = 0;
         this.BoardSize = 7;
         this.board = [
@@ -169,31 +171,42 @@ io.on('connection', function (socket) {
 
     socket.emit("serverConnected", numOfgames);
 
-    // // Handle player move event
-    // socket.on('player-move', function (data) {
-    //     // socket.broadcast.emit('opponent-move', data);
-
-    //     socket.emit('opponent-move', data);
-    // });
-
     // Handle player move event
     socket.on('playerMove', function (row, col, nextTurn, playerNum, thisGame) {
 
         let game = games[thisGame.id];
+
+        // here to not crash the server if someone is still playing after the server restarts.
         if (game == null) {
-            return 0; //
+            return 0;
         }
+
+        // here to start countdown when game starts for the first player
+        if (game.moveNum == 0) {
+            game.mvEndTime = new Date();
+            game.p1time += Math.abs(game.mvStartTime.getSeconds() - game.mvEndTime.getSeconds());
+            game.mvStartTime = new Date();
+        }
+
         game.turn = nextTurn;
         game.moveNum++;
 
+        // handles player 2's move
         if (nextTurn == "p1") {
             game.board[row][col] = 'X';
             game.moves[row][col] = 'X#' + game.moveNum;
+            game.mvEndTime = new Date();
+            game.p2time += Math.abs(game.mvStartTime.getSeconds() - game.mvEndTime.getSeconds());
+            game.mvStartTime = new Date();
         }
 
+        // handles player 1's move
         if (nextTurn == "p2") {
             game.board[row][col] = 'O';
             game.moves[row][col] = 'O#' + game.moveNum;
+            game.mvEndTime = new Date();
+            game.p1time += Math.abs(game.mvStartTime.getSeconds() - game.mvEndTime.getSeconds());
+            game.mvStartTime = new Date();
         }
 
         game.board = thisGame.board;
@@ -211,6 +224,7 @@ io.on('connection', function (socket) {
 
         console.log(nextTurn, "to move");
 
+        // Check if there is a winner or if there is a draw
         if (checkWinner(game.board, game.BoardSize, 1) == 'X') {
             io.to(game.p1Socket).emit('winner', game.p1);
             io.to(game.p2Socket).emit('winner', game.p1);
