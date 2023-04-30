@@ -43,6 +43,8 @@ class Game {
             ['', '', '', '', '', '', '',],
             ['', '', '', '', '', '', '',],
         ];
+        this.gameStart =  false;
+        this.gameEnd = false;
     }
 }
 
@@ -241,6 +243,7 @@ io.on('connection', function (socket) {
 
     socket.on('disconnect', function () {
         console.log('A user disconnected');
+        /// add some code that will end the game if a user disconnects and doesn't reconnect
     });
 
     socket.on('joinGame', function (playerUsername, boardSize) {

@@ -43,10 +43,12 @@ class Game {
             ['', '', '', '', '', '', '',],
             ['', '', '', '', '', '', '',],
         ];
+        this.gameStart = false;
+        this.gameEnd = false;
     }
 }
 
-let thisGame = new Game();
+let game = new Game();
 
 function playsound(sound) {
     if (soundIsplaying == false) {
@@ -76,7 +78,7 @@ startBtn.addEventListener('click', function (e) {
         username = uInput.value;
         startBtn.style.background = "#FF3366"
     }
-    if (thisGame !== null) {
+    if (game !== null) {
         drawBoard();
     }
 });
@@ -101,36 +103,36 @@ canvas.addEventListener('click', function (event) {
         return false;
     }
     if (playerTurn && gameover == false) {
-        if (thisGame.turn == "p1" & username == thisGame.p1) {
-            if (thisGame.board[row][col] === '') {
+        if (game.turn == "p1" & username == game.p1) {
+            if (game.board[row][col] === '') {
                 let turn = "p2";
-                thisGame.board[row][col] = 'X';
+                game.board[row][col] = 'X';
                 drawBoard();
-                socket.emit('playerMove', row, col, turn, playerNum, thisGame);
+                socket.emit('playerMove', row, col, turn, playerNum, game);
                 playsound("select.wav");
-                if (username == thisGame.p2) {
+                if (username == game.p2) {
                     gameMsg.innerText = "It's your turn to make a move."
                 } else {
-                    gameMsg.innerText = "It's " + thisGame.p2 + "'s turn to make a move."
+                    gameMsg.innerText = "It's " + game.p2 + "'s turn to make a move."
                 }
                 playerTurn = false;
             }
-        } else if (thisGame.turn == "p2" & username == thisGame.p2) {
-            if (thisGame.board[row][col] === '') {
+        } else if (game.turn == "p2" & username == game.p2) {
+            if (game.board[row][col] === '') {
                 let turn = "p1";
-                thisGame.board[row][col] = "O";
+                game.board[row][col] = "O";
                 drawBoard();
-                socket.emit('playerMove', row, col, turn, playerNum, thisGame);
+                socket.emit('playerMove', row, col, turn, playerNum, game);
                 playsound("select.wav");
-                if (username == thisGame.p2) {
+                if (username == game.p2) {
                     gameMsg.innerText = "It's your turn to make a move."
                 } else {
-                    gameMsg.innerText = "It's " + thisGame.p2 + "'s turn to make a move."
+                    gameMsg.innerText = "It's " + game.p2 + "'s turn to make a move."
                 }
                 playerTurn = false;
             }
         } else {
-            if (thisGame.moveNum == 0 & username == "") { //if no moves have been made yet and the user has not started searching for a game yet
+            if (game.moveNum == 0 & username == "") { //if no moves have been made yet and the user has not started searching for a game yet
                 errorMsg.hidden = false;
                 setTimeout(() => { errorMsg.hidden = true; }, 2000);
                 playsound("click.mp3");
@@ -156,7 +158,7 @@ socket.on('p1-joined', function (game) {
     console.log("p1-joined event: ", game);
     if (game.p1 == username) {
         playerNum = 1;
-        thisGame = game;
+        game = game;
         p1text.innerText = username;
     }
     playerTurn = true;
@@ -171,13 +173,13 @@ socket.on('p2-joined', function (game, self) {
     var foundMsg = document.getElementById('foundMsg');
     gameId.innerText = game.id;
     if (game.p2 == username) {
-        thisGame = game;
+        game = game;
         playerNum = 2;
         p2text.innerText = username;
         p1text.innerText = game.p1;
         // gameMsg.innerText = "It's " + game.p1 + "'s turn to make a move."
     } else if (game.p1 == username) {
-        thisGame = game;
+        game = game;
         p2text.innerText = game.p2;
         p1text.innerText = game.p1;
         // gameMsg.innerText = "It's Your turn to make a move."
@@ -201,21 +203,21 @@ setInterval(function () { timeControl(); }, 1000);
 
 function timeControl() {
     if (gameover == false && gamestart == true) {
-        if (thisGame.turn == "p1") {
-            thisGame.p1time++;
-        } else if (thisGame.turn == "p2") {
-            thisGame.p2time++;
+        if (game.turn == "p1") {
+            game.p1time++;
+        } else if (game.turn == "p2") {
+            game.p2time++;
         }
         var p1time = document.getElementById("p1time");
-        let t1 = Math.floor(thisGame.p1time / 60) + ":" + (thisGame.p1time % 60);
-        if ((thisGame.p1time % 60) < 10)
-            t1 = Math.floor(thisGame.p1time / 60) + ":0" + (thisGame.p1time % 60);
+        let t1 = Math.floor(game.p1time / 60) + ":" + (game.p1time % 60);
+        if ((game.p1time % 60) < 10)
+            t1 = Math.floor(game.p1time / 60) + ":0" + (game.p1time % 60);
         p1time.innerText = t1;
         // console.log("p1 time: " + t1)
         var p2time = document.getElementById("p2time");
-        let t2 = Math.floor(thisGame.p2time / 60) + ":" + (thisGame.p2time % 60);
-        if ((thisGame.p2time % 60) < 10)
-            t1 = Math.floor(thisGame.p2time / 60) + ":0" + (thisGame.p2time % 60);
+        let t2 = Math.floor(game.p2time / 60) + ":" + (game.p2time % 60);
+        if ((game.p2time % 60) < 10)
+            t1 = Math.floor(game.p2time / 60) + ":0" + (game.p2time % 60);
         p2time.innerText = t2;
         // console.log("p2 time: " + t2)
     }
@@ -225,7 +227,7 @@ let newGameBtn = document.getElementById("newGameBtn");
 
 newGameBtn.addEventListener("click", () => {
     gameover = false;
-    thisGame = new Game();
+    game = new Game();
     loseMsg.hidden = true;
     winMsg.hidden = true;
     gameMsg.hidden = true;
@@ -259,16 +261,16 @@ socket.on('winner', function (winner) {
 })
 
 socket.on('opponentMove', function (move, playerNumber, game) {
-    thisGame = game;
+    game = game;
     errorMsg.hidden = true;
     if (playerNumber == 1) {
-        thisGame.board[move.row][move.col] = 'X';
+        game.board[move.row][move.col] = 'X';
         gameMsg.innerText = "An 'X' had been placedon the board @: [" + move.row + "][" + move.col + "]";
-        setTimeout(() => { gameMsg.innerText = "It's " + thisGame.p2 + "'s turn to make a move." }, 2500)
+        setTimeout(() => { gameMsg.innerText = "It's " + game.p2 + "'s turn to make a move." }, 2500)
     } else if (playerNumber == 2) {
-        thisGame.board[move.row][move.col] = 'O';
+        game.board[move.row][move.col] = 'O';
         gameMsg.innerText = "An 'O' had been placed on the board at: [" + move.row + "][" + move.col + "]";
-        setTimeout(() => { gameMsg.innerText = "It's " + thisGame.p1 + "'s turn to make a move." }, 2500)
+        setTimeout(() => { gameMsg.innerText = "It's " + game.p1 + "'s turn to make a move." }, 2500)
     }
     // updateTime = true;
     timeControl();
@@ -288,7 +290,7 @@ function drawBoard() {
     // Draw X's and O's
     for (let row = 0; row < boardSize; row++) {
         for (let col = 0; col < boardSize; col++) {
-            const value = thisGame.board[row][col];
+            const value = game.board[row][col];
             const x = col * size + size / 2;
             const y = row * size + size / 2;
 
